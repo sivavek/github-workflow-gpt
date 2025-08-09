@@ -34,4 +34,4 @@ on:
     branches: [main]
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight UTC
-workflows_despatch:
+workflow_despatch:
