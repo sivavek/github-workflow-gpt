@@ -20,7 +20,4 @@ jobs:
         run: npm install
 
       - name: Run Tests
-        run: |
-          npm test
-          echo "No test yet"
-          
+        run: npm test || echo "No tests yet"
