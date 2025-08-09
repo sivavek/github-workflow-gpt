@@ -51,3 +51,7 @@ jobs:
       - name: Run Tests
         run: |
           npm test || echo "No test yet"
+      - name: Showing API key
+        run: |
+          echo "API_KEY is ${{ secrets.MY_API_KEY }}"
+          echo "This is a test to show how to use secrets in GitHub Actions"
