@@ -26,32 +26,66 @@
 
 #Cron job activity
 
-name: This is a cron job activity
+# name: This is a cron job activity
+# on:
+#   push:
+#     branches: [main, dev]
+#   pull_request:
+#     branches: [main]
+#   schedule:
+#     - cron: '0 0 * * *' # Runs every day at midnight UTC
+#   workflow_dispatch:
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#       - name: Install Dependencies
+#         run: npm install
+#       - name: Run Tests
+#         run: |
+#           npm test || echo "No test yet"
+#       - name: Showing API key
+#         run: |
+#           echo "API_KEY is ${{ secrets.MY_API_KEY }}"
+#           echo "This is a test to show how to use secrets in GitHub Actions"
+
+# MAtrix job activity
+
+name: This is a matrix job activity
 on:
   push:
     branches: [main, dev]
   pull_request:
     branches: [main]
-  schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight UTC
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14, 16, 18] # Matrix for different Node.js versions
+        
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Set up Node.js
+
+      - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ matrix.node-version }}
+
       - name: Install Dependencies
         run: npm install
+
       - name: Run Tests
         run: |
           npm test || echo "No test yet"
-      - name: Showing API key
-        run: |
-          echo "API_KEY is ${{ secrets.MY_API_KEY }}"
-          echo "This is a test to show how to use secrets in GitHub Actions"
+
