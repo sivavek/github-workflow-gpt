@@ -1,23 +1,37 @@
-name: My First CI Workflow
+# name: My First CI Workflow
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+
+#       - name: Install Dependencies
+#         run: npm install
+
+#       - name: Run Tests
+#         run: |
+#           npm test
+#           echo "No test yet"
+
+#Cron job activity
+
+name: This is a cron job activity
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Run Tests
-        run: npm test || echo "No tests yet"
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+workflows_despatch:
