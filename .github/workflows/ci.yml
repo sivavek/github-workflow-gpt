@@ -483,6 +483,7 @@ jobs:
             fi
 
             sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /home/${{ secrets.EC2_USER }}/.npm
+            sudo chown -R 1000:1000 "/home/${{ secrets.EC2_USER }}/.npm"
 
             cd /var/www/myapp
             echo 'Installing dependencies...'
