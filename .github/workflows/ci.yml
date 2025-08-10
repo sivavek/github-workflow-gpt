@@ -464,6 +464,8 @@ jobs:
             sudo yum install -y git
             if [ ! -d /var/www/myapp ]; then
               echo 'Cloning repository...'
+              sudo mkdir -p /var/www/myapp
+              sudo chown ${{ secrets.EC2_USER }} /var/www/myapp
               git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
             else
               echo 'Repository already exists, pulling latest changes...'
