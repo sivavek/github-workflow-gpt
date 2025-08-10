@@ -272,9 +272,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [14, 16, 18] # You can add more versions if needed
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -290,7 +288,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '18'
 
       - name: Install Dependencies
         run: npm install
