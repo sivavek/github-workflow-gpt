@@ -214,7 +214,6 @@ jobs:
       - name: Deploy to Staging
         run: |
           echo "Deploying to Staging environment"
-          aws s3 sync . s3://my-staging-bucket/ --delete
           echo "Staging deployment completed"
 
   deploy_production:
