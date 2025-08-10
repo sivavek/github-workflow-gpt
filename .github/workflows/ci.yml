@@ -474,4 +474,22 @@ jobs:
               sudo cp -r . ../myapp_backup_$(date +%F_%T)
               git fetch origin main
               git reset --hard origin/main
-            fi"
+            fi
+
+            if ! command -v npm &> /dev/null; then
+            echo "npm could not be found, installing Node.js..."
+            curl -sL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+            sudo yum install -y nodejs
+            fi
+
+            echo 'Installing dependencies...'
+            npm ci --only=production
+            echo 'Restarting app...'
+            if pm2 restart myapp; then
+              echo 'App restarted successfully.'
+            else
+              echo 'App not running, starting it now...'
+              pm2 start server.js --name myapp
+            fi
+          "
+          
