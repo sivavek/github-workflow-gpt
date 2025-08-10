@@ -437,68 +437,69 @@
 
 # Day 7 - Self healing, git aware, safe and zero downtime deployment
 
-name: CI/CD Workflow with Self-Healing, Git-Aware, Safe, and Zero Downtime Deployment
+name: Deploy to EC2
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-    
-      - name: setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ,${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: SSH into EC2 and deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            set -e
-            sudo dnf update -y
-            sudo dnf install -y git
-            if [ ! -d /var/www/myapp ]; then
-              echo 'Cloning repository...'
-              sudo mkdir -p /var/www/myapp
-              sudo chown ${{ secrets.EC2_USER }} /var/www/myapp
-              git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
-            else
-              echo 'Repository already exists, pulling latest changes...'
-              cd /var/www/myapp
-              echo 'Backing up current version...'
-              sudo cp -r . ../myapp_backup_$(date +%F_%T)
-              git fetch origin main
-              git reset --hard origin/main
-            fi
+    - name: Deploy to EC2
+      env:
+        HOST: ${{ secrets.EC2_HOST }}
+        USER: ${{ secrets.EC2_USER }}
+      run: |
+        ssh -o StrictHostKeyChecking=no $USER@$HOST "
+          set -e
+          
+          mkdir -p /var/www/myapp
+          cd /var/www/myapp || exit 1
 
-            if ! command -v npm &> /dev/null; then
-            echo "npm could not be found, installing Node.js..."
-            curl -sL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-            sudo dnf install -y nodejs
-            fi
-
-            sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /home/${{ secrets.EC2_USER }}/.npm
-            sudo chown -R 1000:1000 "/home/${{ secrets.EC2_USER }}/.npm"
-
+          if [ ! -d .git ]; then
+            echo 'No .git found. Cloning fresh...'
+            rm -rf /var/www/myapp
+            git clone https://github.com/<your-org>/<your-repo>.git /var/www/myapp
             cd /var/www/myapp
-            echo 'Installing dependencies...'
-            npm ci --only=production
+          fi
 
-            echo 'Installing PM2 globally if not present...'
-            if ! command -v pm2 &> /dev/null; then
-              npm install -g pm2
-            fi
 
-            echo 'Restarting app...'
-            if pm2 restart myapp; then
-              echo 'App restarted successfully.'
+          echo 'Backing up current version...'
+          mkdir -p backups
+          cp -r . backups/myapp_backup_\$(date +%F_%T)
+
+
+          echo 'Fetching latest code...'
+          git fetch origin main
+          git reset --hard origin/main
+
+
+          if ! command -v npm &> /dev/null; then
+            echo 'Node.js not found. Installing...'
+            if [ -f /etc/debian_version ]; then
+              sudo apt update
+              sudo apt install -y curl
+              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+              sudo apt install -y nodejs
             else
-              echo 'App not running, starting it now...'
-              pm2 start server.js --name myapp
+              sudo yum update -y
+              curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+              sudo yum install -y nodejs
             fi
-          "
+          fi
+
+
+          echo 'Installing dependencies...'
+          npm ci --only=production
+
+
+          echo 'Restarting app with PM2...'
+          pm2 restart myapp || pm2 start server.js --name myapp
+        "
