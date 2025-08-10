@@ -94,7 +94,7 @@ jobs:
     needs: build
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Run Security Scan
         run: |
@@ -102,21 +102,21 @@ jobs:
           # Here you can add your security scanning commands, e.g., npm audit
 
       - name: Initialise CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
       - name: Autobuild CodeQL
-        uses: github/codeql-action/autobuild@v4
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v3
         with:
           category: 'security'
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: security_scan
     environment:
       name: Production
       url: https://example.com
