@@ -254,18 +254,6 @@ jobs:
           payload: |
             {
               "text": "Deployment completed successfully!",
-              "attachments": [
-                {
-                  "title": "Staging Deployment",
-                  "title_link": "${{ jobs.deploy_staging.outputs.url }}",
-                  "color": "#36a64f"
-                },
-                {
-                  "title": "Production Deployment",
-                  "title_link": "${{ jobs.deploy_production.outputs.url }}",
-                  "color": "#36a64f"
-                }
-              ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
