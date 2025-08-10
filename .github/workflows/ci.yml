@@ -259,43 +259,43 @@
 
 # DAY 6: Zero Downtime + Rollback to EC2
 
-name: CI/CD Workflow with Zero Downtime and Rollback
-on:
-  push:
-    branches: [main]
+# name: CI/CD Workflow with Zero Downtime and Rollback
+# on:
+#   push:
+#     branches: [main]
 
-permissions:
-  actions: read
-  contents: read
-  security-events: write
+# permissions:
+#   actions: read
+#   contents: read
+#   security-events: write
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
 
-      - name: Cache Node.js
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+#       - name: Cache Node.js
+#         uses: actions/cache@v4
+#         with:
+#           path: ~/.npm
+#           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#           restore-keys: |
+#             ${{ runner.os }}-node-
     
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
 
-      - name: Install Dependencies
-        run: npm install
+#       - name: Install Dependencies
+#         run: npm install
 
-      - name: Run Tests
-        run: |
-          npm test || echo "No test yet"
+#       - name: Run Tests
+#         run: |
+#           npm test || echo "No test yet"
 
 #   security_scan:
 #     runs-on: ubuntu-latest
@@ -322,116 +322,150 @@ jobs:
 #         with:
 #           category: 'security'
 
-  deploy_staging:
+#   deploy_staging:
+#     runs-on: ubuntu-latest
+#     environment:
+#       name: staging
+#       url: https://staging.example.com
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
+
+#       - name: Set up AWS CLI
+#         run: |
+#           echo "Setting up AWS CLI"
+#           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#           unzip awscliv2.zip
+#           sudo ./aws/install --update
+#           echo "AWS CLI setup completed"
+
+#       - name: Deploy to Staging
+#         run: |
+#           echo "Deploying to Staging environment"
+#           # Add your deployment commands here
+
+#   deploy_production:
+#     runs-on: ubuntu-latest
+#     needs: deploy_staging
+#     environment:
+#       name: Production
+#       url: https://example.com
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: setup SSH
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+#       - name: Rolling update to ec2
+#         run: |
+#           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+#             set -e
+#             rm -rf /var/www/myapp
+#             git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
+#             cd /var/www/myapp
+#             echo 'Backing up current version...'
+#             cp -r . ../myapp_backup_$(date +%F_%T)
+#             echo 'Fetching latest code...'
+#             git fetch origin main
+#             git reset --hard origin/main
+#             echo 'Installing dependencies...'
+#             npm ci --only=production
+#             echo 'Restarting app...'
+#             pm2 restart myapp || pm2 start server.js --name myapp
+#           "
+#       - name: Rollback if Deployment Fails
+#         if: failure()
+#         run: |
+#           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+#             echo 'Rolling back to last backup...'
+#             LATEST_BACKUP=$(ls -td ../myapp_backup_* | head -1)
+#             if [ -d \"$LATEST_BACKUP\" ]; then
+#               rm -rf /var/www/myapp
+#               cp -r \"$LATEST_BACKUP\" /var/www/myapp
+#               pm2 restart myapp
+#               echo 'Rollback complete.'
+#             else
+#               echo 'No backup found. Rollback skipped.'
+#             fi
+#           "
+
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
+
+#       - name: Set up AWS CLI
+#         run: |
+#           echo "Setting up AWS CLI"
+#           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#           unzip awscliv2.zip
+#           sudo ./aws/install --update
+#           echo "AWS CLI setup completed"
+
+#       - name: Deploy to Production
+#         run: |
+#           echo "Deploying to Production environment"
+#           # Add your deployment commands here
+
+#   notify_slack:
+#     runs-on: ubuntu-latest
+#     needs: [deploy_staging, deploy_production]
+#     steps:
+#       - name: Notify Slack
+#         uses: slackapi/slack-github-action@v1.27.0
+#         with:
+#           payload: |
+#             {
+#               "text": ":white_check_mark: Deployment Successful!\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Triggered by:* ${ github.actor }"
+#             }
+#         env:
+#           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}   
+
+# Day 7 - Self healing, git aware, safe and zero downtime deployment
+
+name: CI/CD Workflow with Self-Healing, Git-Aware, Safe, and Zero Downtime Deployment
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: https://staging.example.com
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Set up AWS CLI
-        run: |
-          echo "Setting up AWS CLI"
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --update
-          echo "AWS CLI setup completed"
-
-      - name: Deploy to Staging
-        run: |
-          echo "Deploying to Staging environment"
-          # Add your deployment commands here
-
-  deploy_production:
-    runs-on: ubuntu-latest
-    needs: deploy_staging
-    environment:
-      name: Production
-      url: https://example.com
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
+    
       - name: setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ,${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Rolling update to ec2
+      - name: SSH into EC2 and deploy
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
-            rm -rf /var/www/myapp
-            git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
-            cd /var/www/myapp
-            echo 'Backing up current version...'
-            cp -r . ../myapp_backup_$(date +%F_%T)
-            echo 'Fetching latest code...'
-            git fetch origin main
-            git reset --hard origin/main
-            echo 'Installing dependencies...'
-            npm ci --only=production
-            echo 'Restarting app...'
-            pm2 restart myapp || pm2 start server.js --name myapp
-          "
-      - name: Rollback if Deployment Fails
-        if: failure()
-        run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            echo 'Rolling back to last backup...'
-            LATEST_BACKUP=$(ls -td ../myapp_backup_* | head -1)
-            if [ -d \"$LATEST_BACKUP\" ]; then
-              rm -rf /var/www/myapp
-              cp -r \"$LATEST_BACKUP\" /var/www/myapp
-              pm2 restart myapp
-              echo 'Rollback complete.'
+            if [ ! -d /var/www/myapp ]; then
+              echo 'Cloning repository...'
+              git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
             else
-              echo 'No backup found. Rollback skipped.'
+              echo 'Repository already exists, pulling latest changes...'
+              cd /var/www/myapp
+              git fetch origin main
+              git reset --hard origin/main
             fi
-          "
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Set up AWS CLI
-        run: |
-          echo "Setting up AWS CLI"
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --update
-          echo "AWS CLI setup completed"
-
-      - name: Deploy to Production
-        run: |
-          echo "Deploying to Production environment"
-          # Add your deployment commands here
-
-  notify_slack:
-    runs-on: ubuntu-latest
-    needs: [deploy_staging, deploy_production]
-    steps:
-      - name: Notify Slack
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "text": ":white_check_mark: Deployment Successful!\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Triggered by:* ${ github.actor }"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}   
-
