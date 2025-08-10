@@ -468,4 +468,4 @@ jobs:
               cd /var/www/myapp
               git fetch origin main
               git reset --hard origin/main
-            fi
+            fi"
