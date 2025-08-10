@@ -483,10 +483,13 @@ jobs:
             fi
 
             echo 'Installing dependencies...'
-            sudo mkdir ~/.npm-global
-            sudo npm config set prefix '~/.npm-global'
-            export PATH=~/.npm-global/bin:$PATH
-            source ~/.bash_profile
+            if [ ! -d ~/.npm-global ];then
+              sudo mkdir ~/.npm-global
+              sudo npm config set prefix '~/.npm-global'
+              export PATH=~/.npm-global/bin:$PATH
+              source ~/.bash_profile
+            fi
+            
             npm install -g pm2
             echo 'Restarting app...'
             if pm2 restart myapp; then
