@@ -458,7 +458,7 @@ jobs:
 
       - name: SSH into EC2 and deploy
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
             if [ ! -d /var/www/myapp ]; then
               echo 'Cloning repository...'
