@@ -375,8 +375,9 @@ jobs:
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
-            cd /var/www/myapp
+            rm -rf /var/www/myapp
             git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
+            cd /var/www/myapp
             echo 'Backing up current version...'
             cp -r . ../myapp_backup_$(date +%F_%T)
             echo 'Fetching latest code...'
