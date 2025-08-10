@@ -569,7 +569,12 @@ jobs:
 
           echo "Checking if PM2 is installed..."
           if ! command -v pm2 &> /dev/null; then
-              npm install -g pm2
+            mkdir -p ~/.npm-global
+            npm config set prefix ~/.npm-global
+            export PATH=~/.npm-global/bin:$PATH
+            sudo chown -R $USER:$USER ~/.npm
+            sudo chown -R $USER:$USER ~/.npm-global
+            npm install -g pm2
           fi
 
           echo 'Restarting app with PM2...'
