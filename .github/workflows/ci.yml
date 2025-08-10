@@ -460,8 +460,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
-            sudo apt update -y
-            sudo apt install -y git
+            sudo yum update -y
+            sudo yum install -y git
             if [ ! -d /var/www/myapp ]; then
               echo 'Cloning repository...'
               git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
