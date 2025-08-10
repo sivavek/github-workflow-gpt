@@ -576,7 +576,4 @@ jobs:
             sudo chown -R $USER:$USER ~/.npm-global
             npm install -g pm2
           fi
-
-          echo 'Restarting app with PM2...'
-          pm2 restart myapp || pm2 start server.js --name myapp
         "
