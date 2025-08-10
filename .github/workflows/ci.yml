@@ -460,8 +460,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -e
-            sudo yum update -y
-            sudo yum install -y git
+            sudo dnf update -y
+            sudo dnf install -y git
             if [ ! -d /var/www/myapp ]; then
               echo 'Cloning repository...'
               sudo mkdir -p /var/www/myapp
@@ -479,20 +479,20 @@ jobs:
             if ! command -v npm &> /dev/null; then
             echo "npm could not be found, installing Node.js..."
             curl -sL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-            sudo yum install -y nodejs
+            sudo dnf install -y nodejs
             fi
 
+            sudo chown -R ${{ secrets.EC2_USER }}:${{ secrets.EC2_USER }} /home/${{ secrets.EC2_USER }}/.npm
+
+            cd /var/www/myapp
             echo 'Installing dependencies...'
-            if [ ! -d ~/.npm-global ];then
-              sudo mkdir ~/.npm-global
-            fi
-            
-            sudo chown -R 1000:1000 "/home/***/.npm"
-            npm config set prefix '~/.npm-global'
-            export PATH=~/.npm-global/bin:$PATH
-            source ~/.bash_profile
+            npm ci --only=production
 
-            npm install -g pm2
+            echo 'Installing PM2 globally if not present...'
+            if ! command -v pm2 &> /dev/null; then
+              npm install -g pm2
+            fi
+
             echo 'Restarting app...'
             if pm2 restart myapp; then
               echo 'App restarted successfully.'
