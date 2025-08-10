@@ -487,10 +487,11 @@ jobs:
               sudo mkdir ~/.npm-global
             fi
             
+            sudo chown -R 1000:1000 "/home/ec2-user/.npm"
             npm config set prefix '~/.npm-global'
             export PATH=~/.npm-global/bin:$PATH
             source ~/.bash_profile
-            
+
             npm install -g pm2
             echo 'Restarting app...'
             if pm2 restart myapp; then
