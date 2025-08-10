@@ -95,13 +95,6 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
       - name: AWS CLI Setup
         run: |
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -110,6 +103,12 @@ jobs:
       
       - name: Verify AWS CLI installation
         run: aws --version
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    #   - name: Deploy to AWS
-    #     run: aws s3 sync ./ s3://my-test-vpc-flowlogs-bucket --recursive
+      - name: Deploy to AWS
+        run: aws s3 cp ./ s3://my-test-vpc-flowlogs-bucket --recursive
