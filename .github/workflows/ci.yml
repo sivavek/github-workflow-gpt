@@ -483,7 +483,7 @@ jobs:
             fi
 
             echo 'Installing dependencies...'
-            npm install
+            npm install -g pm2
             echo 'Restarting app...'
             if pm2 restart myapp; then
               echo 'App restarted successfully.'
