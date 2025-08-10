@@ -485,10 +485,11 @@ jobs:
             echo 'Installing dependencies...'
             if [ ! -d ~/.npm-global ];then
               sudo mkdir ~/.npm-global
-              sudo npm config set prefix '~/.npm-global'
-              export PATH=~/.npm-global/bin:$PATH
-              source ~/.bash_profile
             fi
+            
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+            source ~/.bash_profile
             
             npm install -g pm2
             echo 'Restarting app...'
