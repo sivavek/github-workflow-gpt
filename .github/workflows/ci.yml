@@ -107,7 +107,9 @@ jobs:
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
           unzip awscliv2.zip
           sudo ./aws/install --update
+      
+      - name: Verify AWS CLI installation
+        run: aws --version
 
-
-      - name: Deploy to AWS
-        run: aws s3 sync ./ s3://my-test-vpc-flowlogs-bucket --recursive
+    #   - name: Deploy to AWS
+    #     run: aws s3 sync ./ s3://my-test-vpc-flowlogs-bucket --recursive
