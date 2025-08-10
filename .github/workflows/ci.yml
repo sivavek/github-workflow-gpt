@@ -470,6 +470,8 @@ jobs:
             else
               echo 'Repository already exists, pulling latest changes...'
               cd /var/www/myapp
+              echo 'Backing up current version...'
+              sudo cp -r . ../myapp_backup_$(date +%F_%T)
               git fetch origin main
               git reset --hard origin/main
             fi"
