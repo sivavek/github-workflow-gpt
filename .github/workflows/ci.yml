@@ -503,7 +503,97 @@
 #             fi
 #           "
 
-name: Deploy to EC2
+# name: Deploy to EC2
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v3
+
+#     - name: Deploy to EC2
+#       env:
+#         HOST: ${{ secrets.EC2_HOST }}
+#         USER: ${{ secrets.EC2_USER }}
+#       run: |
+#         mkdir -p ~/.ssh
+#         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+#         chmod 600 ~/.ssh/id_rsa
+#         ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
+#         ssh -o StrictHostKeyChecking=no $USER@$HOST "
+#           set -e
+          
+#           mkdir -p /var/www/myapp
+#           cd /var/www/myapp || exit 1
+
+#           if [ ! -d .git ]; then
+#             echo 'No .git found. Cloning fresh...'
+#             rm -rf /var/www/myapp
+#             git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
+#             cd /var/www/myapp
+#           fi
+
+#           echo 'Backing up current version...'
+#           sudo cp -r . ../myapp_backup_\$(date +%F_%T)
+
+
+#           echo 'Fetching latest code...'
+#           git fetch origin main
+#           git reset --hard origin/main
+
+
+#           if ! command -v npm &> /dev/null; then
+#             echo 'Node.js not found. Installing...'
+#             if [ -f /etc/debian_version ]; then
+#               sudo apt update
+#               sudo apt install -y curl
+#               curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+#               sudo apt install -y nodejs
+#             else
+#               sudo dnf update -y
+#               curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+#               sudo dnf install -y nodejs
+#             fi
+#           fi
+
+
+#           echo 'Installing dependencies...'
+#           npm ci --only=production
+
+#           echo "Checking if PM2 is installed..."
+#           if ! command -v pm2 &> /dev/null; then
+#             mkdir -p ~/.npm-global
+#             npm config set prefix ~/.npm-global
+#             export PATH=~/.npm-global/bin:$PATH
+#             sudo chown -R $USER:$USER ~/.npm
+#             sudo chown -R $USER:$USER ~/.npm-global
+#             npm install -g pm2
+#           fi
+#         "
+#   notify:
+#     runs-on: ubuntu-latest
+#     needs: deploy
+#     steps:
+#       - name: Notify Slack
+#         uses: slackapi/slack-github-action@v1.27.0
+#         with:
+#           payload: |
+#             {
+#               "text": ":white_check_mark: Deployment Successful!\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Triggered by:* ${{ github.actor }}"
+#             }
+#         env:
+#           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+# DAY 11 Blue Green Deployment
+
+name: Deploy with Blue-Green Strategy
 
 on:
   push:
@@ -518,7 +608,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Deploy to EC2
+    - name: Deploy to EC2 with Blue-Green
       env:
         HOST: ${{ secrets.EC2_HOST }}
         USER: ${{ secrets.EC2_USER }}
@@ -529,64 +619,53 @@ jobs:
         ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
         ssh -o StrictHostKeyChecking=no $USER@$HOST "
           set -e
-          
-          mkdir -p /var/www/myapp
-          cd /var/www/myapp || exit 1
 
-          if [ ! -d .git ]; then
-            echo 'No .git found. Cloning fresh...'
-            rm -rf /var/www/myapp
-            git clone https://github.com/sivavek/github-workflow-gpt.git /var/www/myapp
-            cd /var/www/myapp
+          ACTIVE_ENV=\$(readlink /var/www/current | grep -o 'myapp-[a-z]*')
+          if [ \"\$ACTIVE_ENV\" == \"myapp-blue\" ]; then
+            INACTIVE_ENV=\"myapp-green\"
+          else
+            INACTIVE_ENV=\"myapp-blue\"
           fi
 
-          echo 'Backing up current version...'
-          sudo cp -r . ../myapp_backup_\$(date +%F_%T)
+          echo \"Active env: \$ACTIVE_ENV\"
+          echo \"Inactive env (to be deployed): \$INACTIVE_ENV\"
 
+          mkdir -p /var/www/\$INACTIVE_ENV
 
-          echo 'Fetching latest code...'
-          git fetch origin main
-          git reset --hard origin/main
+          cd /var/www/\$INACTIVE_ENV
 
+          if [ ! -d .git ]; then
+            echo \"Cloning fresh code into \$INACTIVE_ENV...\"
+            git clone https://github.com/<your-org>/<your-repo>.git .
+          else
+            echo \"Fetching latest code in \$INACTIVE_ENV...\"
+            git fetch origin main
+            git reset --hard origin/main
+          fi
 
           if ! command -v npm &> /dev/null; then
-            echo 'Node.js not found. Installing...'
+            echo 'Installing Node.js...'
             if [ -f /etc/debian_version ]; then
               sudo apt update
               sudo apt install -y curl
               curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
               sudo apt install -y nodejs
             else
-              sudo dnf update -y
+              sudo yum update -y
               curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-              sudo dnf install -y nodejs
+              sudo yum install -y nodejs
             fi
           fi
 
-
-          echo 'Installing dependencies...'
+          echo \"Installing dependencies...\"
           npm ci --only=production
 
-          echo "Checking if PM2 is installed..."
-          if ! command -v pm2 &> /dev/null; then
-            mkdir -p ~/.npm-global
-            npm config set prefix ~/.npm-global
-            export PATH=~/.npm-global/bin:$PATH
-            sudo chown -R $USER:$USER ~/.npm
-            sudo chown -R $USER:$USER ~/.npm-global
-            npm install -g pm2
-          fi
+          echo \"Restarting PM2 for \$INACTIVE_ENV...\"
+          pm2 startOrReload ecosystem.config.js --only \$INACTIVE_ENV || pm2 start server.js --name \$INACTIVE_ENV
+
+          echo \"Switching NGINX symlink to point to \$INACTIVE_ENV...\"
+          ln -sfn /var/www/\$INACTIVE_ENV /var/www/current
+          sudo systemctl reload nginx
+
+          echo \"✅ Blue-Green deployment complete!\"
         "
-  notify:
-    runs-on: ubuntu-latest
-    needs: deploy
-    steps:
-      - name: Notify Slack
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "text": ":white_check_mark: Deployment Successful!\n*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Triggered by:* ${{ github.actor }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
