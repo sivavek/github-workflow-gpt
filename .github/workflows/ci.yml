@@ -593,79 +593,79 @@
 
 # DAY 11 Blue Green Deployment
 
-name: Deploy with Blue-Green Strategy
+# name: Deploy with Blue-Green Strategy
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v3
 
-    - name: Deploy to EC2 with Blue-Green
-      env:
-        HOST: ${{ secrets.EC2_HOST }}
-        USER: ${{ secrets.EC2_USER }}
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
-        ssh -o StrictHostKeyChecking=no $USER@$HOST "
-          set -e
+#     - name: Deploy to EC2 with Blue-Green
+#       env:
+#         HOST: ${{ secrets.EC2_HOST }}
+#         USER: ${{ secrets.EC2_USER }}
+#       run: |
+#         mkdir -p ~/.ssh
+#         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+#         chmod 600 ~/.ssh/id_rsa
+#         ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
+#         ssh -o StrictHostKeyChecking=no $USER@$HOST "
+#           set -e
 
-          ACTIVE_ENV=\$(readlink /var/www/current | grep -o 'myapp-[a-z]*')
-          if [ \"\$ACTIVE_ENV\" == \"myapp-blue\" ]; then
-            INACTIVE_ENV=\"myapp-green\"
-          else
-            INACTIVE_ENV=\"myapp-blue\"
-          fi
+#           ACTIVE_ENV=\$(readlink /var/www/current | grep -o 'myapp-[a-z]*')
+#           if [ \"\$ACTIVE_ENV\" == \"myapp-blue\" ]; then
+#             INACTIVE_ENV=\"myapp-green\"
+#           else
+#             INACTIVE_ENV=\"myapp-blue\"
+#           fi
 
-          echo \"Active env: \$ACTIVE_ENV\"
-          echo \"Inactive env (to be deployed): \$INACTIVE_ENV\"
+#           echo \"Active env: \$ACTIVE_ENV\"
+#           echo \"Inactive env (to be deployed): \$INACTIVE_ENV\"
 
-          mkdir -p /var/www/\$INACTIVE_ENV
+#           mkdir -p /var/www/\$INACTIVE_ENV
 
-          cd /var/www/\$INACTIVE_ENV
+#           cd /var/www/\$INACTIVE_ENV
 
-          if [ ! -d .git ]; then
-            echo \"Cloning fresh code into \$INACTIVE_ENV...\"
-            git clone https://github.com/sivavek/simple-jave-nodejs-app.git .
-          else
-            echo \"Fetching latest code in \$INACTIVE_ENV...\"
-            git fetch origin main
-            git reset --hard origin/main
-          fi
+#           if [ ! -d .git ]; then
+#             echo \"Cloning fresh code into \$INACTIVE_ENV...\"
+#             git clone https://github.com/sivavek/simple-jave-nodejs-app.git .
+#           else
+#             echo \"Fetching latest code in \$INACTIVE_ENV...\"
+#             git fetch origin main
+#             git reset --hard origin/main
+#           fi
 
-          if ! command -v npm &> /dev/null; then
-            echo 'Installing Node.js...'
-            if [ -f /etc/debian_version ]; then
-              sudo apt update
-              sudo apt install -y curl
-              curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-              sudo apt install -y nodejs
-            else
-              sudo yum update -y
-              curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-              sudo yum install -y nodejs
-            fi
-          fi
+#           if ! command -v npm &> /dev/null; then
+#             echo 'Installing Node.js...'
+#             if [ -f /etc/debian_version ]; then
+#               sudo apt update
+#               sudo apt install -y curl
+#               curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+#               sudo apt install -y nodejs
+#             else
+#               sudo yum update -y
+#               curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+#               sudo yum install -y nodejs
+#             fi
+#           fi
 
-          echo \"Installing dependencies...\"
-          npm ci --only=production
+#           echo \"Installing dependencies...\"
+#           npm ci --only=production
 
-          echo \"Restarting PM2 for \$INACTIVE_ENV...\"
-          pm2 startOrReload ecosystem.config.js --only \$INACTIVE_ENV || pm2 start server.js --name \$INACTIVE_ENV
+#           echo \"Restarting PM2 for \$INACTIVE_ENV...\"
+#           pm2 startOrReload ecosystem.config.js --only \$INACTIVE_ENV || pm2 start server.js --name \$INACTIVE_ENV
 
-          echo \"Switching NGINX symlink to point to \$INACTIVE_ENV...\"
-          ln -sfn /var/www/\$INACTIVE_ENV /var/www/current
-          sudo systemctl reload nginx
+#           echo \"Switching NGINX symlink to point to \$INACTIVE_ENV...\"
+#           ln -sfn /var/www/\$INACTIVE_ENV /var/www/current
+#           sudo systemctl reload nginx
 
-          echo \"✅ Blue-Green deployment complete!\"
-        "
+#           echo \"✅ Blue-Green deployment complete!\"
+#         "
